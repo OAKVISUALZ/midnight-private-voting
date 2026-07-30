@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.turbo/
+.midnight-state.json
+*.log
+.env
+.DS_Store
+coverage/

@@ -1,0 +1,9 @@
+{
+  "name": "midnight-private-voting",
+  "private": true,
+  "scripts": {
+    "test": "npm run test --workspace=packages/contract",
+    "test:unit": "npm run test:unit --workspace=packages/contract",
+    "test:integration": "npm run test:integration --workspace=packages/contract"
+  }
+}

@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  midnight-node:
+    image: midnightntwrk/midnight-node:latest
+    ports: ["9944:9944"]
+    environment: [MN_NETWORK=dev]
+    volumes: [midnight-node-data:/data]
+  midnight-indexer:
+    image: midnightntwrk/midnight-indexer:latest
+    ports: ["8080:8080"]
+    environment: [MN_NODE_URL=http://midnight-node:9944]
+  proof-server:
+    image: midnightntwrk/proof-server:latest
+    ports: ["6300:6300"]
+volumes:
+  midnight-node-data:
