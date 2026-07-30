@@ -1,0 +1,38 @@
+export ledger VotingBox {
+  proposals: Map<CircuitUint8, CircuitUint64>,
+  voterCommitments: MerkleTree<20, CircuitField>,
+  nullifiers: Set<CircuitField>,
+  votingOpen: CircuitBool,
+}
+
+export circuit registerVoter(voterSecret: CircuitField): [] {
+  assert(votingOpen, "Registration is closed");
+  const commitment = pedersenHash(voterSecret);
+  voterCommitments.insert(commitment);
+}
+
+export circuit castVote(
+  voterSecret: CircuitField,
+  authPath: MerkleProof<20>,
+  proposalId: CircuitUint8,
+): [] {
+  assert(votingOpen, "Voting is closed");
+  const commitment = pedersenHash(voterSecret);
+  assert(voterCommitments.checkMembership(commitment, authPath), "Voter not registered");
+  const nullifier = pedersenHash(voterSecret ++ 1);
+  assert(!nullifiers.member(nullifier), "Already voted");
+  nullifiers.insert(disclose(nullifier));
+  proposals.increment(proposalId, 1);
+}
+
+export query getProposalVotes(proposalId: CircuitUint8): CircuitUint64 {
+  return proposals.getOrDefault(proposalId, 0);
+}
+
+export query getTotalVoters(): CircuitUint64 {
+  return voterCommitments.size();
+}
+
+export query isNullifierUsed(nullifier: CircuitField): CircuitBool {
+  return nullifiers.member(nullifier);
+}
