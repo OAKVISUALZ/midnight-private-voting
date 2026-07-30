@@ -1,13 +1,12 @@
 import { useState, useCallback } from 'react';
 import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
-import { buildProviders } from '../providers.js';
+import { buildProviders } from '../lib/providers.js';
 import { VotingContractAPI, type ProposalVotes } from '../voting.js';
 
 export interface ContractState {
   contract: VotingContractAPI | null;
   contractAddress: string | null;
-  providers: MidnightProviders | null;
   isDeploying: boolean;
   isRegistering: boolean;
   isVoting: boolean;
@@ -20,7 +19,6 @@ export function useContract() {
   const [state, setState] = useState<ContractState>({
     contract: null,
     contractAddress: null,
-    providers: null,
     isDeploying: false,
     isRegistering: false,
     isVoting: false,
@@ -29,16 +27,16 @@ export function useContract() {
     error: null,
   });
 
-  const deploy = useCallback(async (walletAPI: ConnectedAPI, walletAddress: string) => {
+  const deploy = useCallback(async (connectedAPI: ConnectedAPI) => {
     setState(prev => ({ ...prev, isDeploying: true, error: null }));
     try {
-      const providers = await buildProviders(walletAPI, walletAddress);
-      const voting = await VotingContractAPI.deploy(providers, walletAPI);
+      const providers = await buildProviders(connectedAPI);
+      const voting = await VotingContractAPI.deploy(providers);
+      const addr = voting.getAddress();
       setState(prev => ({
         ...prev,
         contract: voting,
-        contractAddress: voting.getAddress(),
-        providers,
+        contractAddress: addr,
         isDeploying: false,
       }));
     } catch (err) {
@@ -51,19 +49,17 @@ export function useContract() {
   }, []);
 
   const joinExisting = useCallback(async (
-    walletAPI: ConnectedAPI,
-    walletAddress: string,
+    connectedAPI: ConnectedAPI,
     contractAddress: string,
   ) => {
     setState(prev => ({ ...prev, error: null }));
     try {
-      const providers = await buildProviders(walletAPI, walletAddress);
+      const providers = await buildProviders(connectedAPI);
       const voting = await VotingContractAPI.join(providers, contractAddress);
       setState(prev => ({
         ...prev,
         contract: voting,
         contractAddress,
-        providers,
       }));
     } catch (err) {
       setState(prev => ({
@@ -78,7 +74,7 @@ export function useContract() {
     setState(prev => ({ ...prev, isRegistering: true, error: null }));
     try {
       await state.contract.registerVoter();
-      const totalVoters = await state.contract.getTotalVoters();
+      const totalVoters = await state.contract.queryTotalVoters();
       setState(prev => ({ ...prev, isRegistering: false, totalVoters }));
     } catch (err) {
       setState(prev => ({
@@ -110,13 +106,13 @@ export function useContract() {
     try {
       const [votes, totalVoters] = await Promise.all([
         state.contract.getAllProposalVotes([1, 2, 3]),
-        state.contract.getTotalVoters(),
+        state.contract.queryTotalVoters(),
       ]);
       setState(prev => ({ ...prev, proposalVotes: votes, totalVoters }));
     } catch (err) {
       setState(prev => ({
         ...prev,
-        error: err instanceof Error ? err.message : 'Failed to refresh',
+        error: err instanceof Error ? err.message : 'Failed to refresh results',
       }));
     }
   }, [state.contract]);

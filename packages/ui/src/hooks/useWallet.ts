@@ -1,42 +1,71 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
+import type { InitialAPI, ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 
 export interface WalletState {
   api: ConnectedAPI | null;
+  initialAPI: InitialAPI | null;
   address: string | null;
-  balance: string | null;
   isConnecting: boolean;
   error: string | null;
+}
+
+function findWallets(): InitialAPI[] {
+  const midnight = (window as { midnight?: Record<string, unknown> }).midnight;
+  if (!midnight) return [];
+  return Object.values(midnight).filter(
+    (c): c is InitialAPI =>
+      !!c &&
+      typeof c === 'object' &&
+      'name' in c &&
+      'apiVersion' in c &&
+      'connect' in c &&
+      typeof (c as InitialAPI).connect === 'function',
+  );
 }
 
 export function useWallet() {
   const [state, setState] = useState<WalletState>({
     api: null,
+    initialAPI: null,
     address: null,
-    balance: null,
     isConnecting: false,
     error: null,
   });
+  const [availableWallets, setAvailableWallets] = useState<InitialAPI[]>([]);
+  const [detecting, setDetecting] = useState(true);
 
-  const connect = useCallback(async () => {
+  useEffect(() => {
+    let attempts = 0;
+    const timer = setInterval(() => {
+      const wallets = findWallets();
+      if (wallets.length > 0) {
+        setAvailableWallets(wallets);
+        setDetecting(false);
+        clearInterval(timer);
+      } else if (++attempts > 40) {
+        setDetecting(false);
+        clearInterval(timer);
+      }
+    }, 500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const connect = useCallback(async (networkId = 'preprod') => {
+    const wallets = findWallets();
+    if (wallets.length === 0) {
+      setState(prev => ({ ...prev, error: 'No Lace wallet detected. Please install the Midnight extension.' }));
+      return;
+    }
     setState(prev => ({ ...prev, isConnecting: true, error: null }));
     try {
-      const wallets = Object.values(window.midnight ?? {});
-      if (wallets.length === 0) {
-        throw new Error('No Midnight wallet detected. Please install Lace wallet.');
-      }
-
       const wallet = wallets[0];
-      const api = await wallet.connect('preprod');
-      const walletState = await api.state();
-
-      const addr = walletState.address || walletState.shieldedAddresses?.[0] || 'unknown';
-      const bal = walletState.balances?.total?.toString() ?? null;
-
+      const api = await wallet.connect(networkId);
+      const config = await api.getConfiguration();
+      const unshielded = await api.getUnshieldedAddress();
       setState({
         api,
-        address: addr,
-        balance: bal,
+        initialAPI: wallet,
+        address: unshielded.unshieldedAddress,
         isConnecting: false,
         error: null,
       });
@@ -50,27 +79,8 @@ export function useWallet() {
   }, []);
 
   const disconnect = useCallback(() => {
-    setState({
-      api: null,
-      address: null,
-      balance: null,
-      isConnecting: false,
-      error: null,
-    });
+    setState({ api: null, initialAPI: null, address: null, isConnecting: false, error: null });
   }, []);
 
-  useEffect(() => {
-    const checkWallet = () => {
-      if (!window.midnight || Object.keys(window.midnight).length === 0) {
-        setState(prev => ({
-          ...prev,
-          error: 'Lace wallet not detected. Please install the extension.',
-        }));
-      }
-    };
-    const timer = setTimeout(checkWallet, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  return { ...state, connect, disconnect };
+  return { ...state, availableWallets, detecting, connect, disconnect };
 }
