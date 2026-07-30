@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Private Voting - Midnight dApp Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0b0d1a;color:#e0e3f0;min-height:100vh}
+.app{max-width:800px;margin:0 auto;padding:2rem}
+header{text-align:center;margin-bottom:2rem}
+header h1{font-size:2rem;color:#b388ff}
+header p{color:#8891b0;margin:.5rem 0 1rem}
+.badge{font-size:.85rem;color:#00c853;background:#1a2e1a;border:1px solid #00c85340;padding:.4rem 1rem;border-radius:20px;display:inline-block}
+.card{background:#131626;border:1px solid #252a4a;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.card h2{font-size:1.2rem;margin-bottom:1rem;color:#b388ff}
+button{background:#7c4dff;color:#fff;border:none;padding:.6rem 1.4rem;border-radius:8px;cursor:pointer;font-size:.95rem;transition:background .2s}
+button:hover{background:#651fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{font-size:.8rem;padding:.3rem .8rem}
+.wallet-section{margin-bottom:1rem}
+.wallet-info{display:flex;flex-direction:column;gap:.5rem}
+.wallet-row{display:flex;align-items:center;gap:.5rem}
+.wallet-row .label{color:#8891b0;font-size:.85rem;min-width:70px}
+.wallet-row .value{color:#e0e3f0}
+.mono{font-family:'SF Mono','Fira Code',monospace;font-size:.85rem}
+.action-row{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap;align-items:center}
+.contract-info{margin-top:1rem;padding:.8rem;background:#0f1225;border-radius:8px;display:flex;flex-direction:column;gap:.4rem}
+.proposal-item{display:flex;justify-content:space-between;align-items:center;padding:.8rem 0;border-bottom:1px solid #1e2340}
+.proposal-item:last-child{border-bottom:none}
+.proposal-id{font-weight:600;color:#e0e3f0}
+.result-bar{display:flex;align-items:center;gap:1rem;padding:.5rem 0}
+.bar-fill{height:24px;border-radius:6px;transition:width .3s}
+footer{text-align:center;margin-top:3rem;color:#555a7a;font-size:.85rem}
+.netlify-badge{text-align:center;margin-top:1rem}
+.netlify-badge img{height:40px}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <h1>Private Voting dApp</h1>
+    <p>Anonymous ballots with publicly verifiable tallies</p>
+    <div class="badge">Connected: 0x7a3f...c9b2</div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>Voting Dashboard</h2>
+      <div class="wallet-section">
+        <div class="wallet-info">
+          <div class="wallet-row"><span class="label">Wallet:</span><span class="value mono">0x7a3f8e...c9b2</span><button class="btn-sm">Disconnect</button></div>
+          <div class="wallet-row"><span class="label">Balance:</span><span class="value">1,250 tNIGHT</span></div>
+        </div>
+      </div>
+      <div class="contract-info">
+        <div class="wallet-row"><span class="label">Contract:</span><span class="value mono">0x4d2a1f...b8e7</span></div>
+        <div class="wallet-row"><span class="label">Voters:</span><span class="value">3</span></div>
+      </div>
+      <div class="action-row">
+        <button>Register to Vote</button>
+        <span style="color:#8891b0;font-size:.85rem">Your identity stays private on-chain</span>
+      </div>
+      <div class="action-row">
+        <span style="color:#8891b0;font-size:.85rem;align-self:center">Cast your anonymous vote:</span>
+        <button style="background:#3d5afe;flex:1">Vote #1</button>
+        <button style="background:#3d5afe;flex:1">Vote #2</button>
+        <button style="background:#3d5afe;flex:1">Vote #3</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Active Proposals</h2>
+      <div class="proposal-item"><span class="proposal-id">#1</span><span>Proposal A: Increase Treasury Allocation</span><span style="color:#8891b0;font-size:.85rem">42 votes</span></div>
+      <div class="proposal-item"><span class="proposal-id">#2</span><span>Proposal B: Reduce Governance Threshold</span><span style="color:#8891b0;font-size:.85rem">28 votes</span></div>
+      <div class="proposal-item"><span class="proposal-id">#3</span><span>Proposal C: Fund Community Grants</span><span style="color:#8891b0;font-size:.85rem">63 votes</span></div>
+    </section>
+
+    <section class="card">
+      <h2>Live Results (Publicly Verifiable)</h2>
+      <div class="result-bar">
+        <span style="width:100px">Proposal #1</span>
+        <div style="flex:1;background:#1e2340;border-radius:6px"><div class="bar-fill" style="width:66%;background:#7c4dff"></div></div>
+        <span style="width:50px;text-align:right">42</span>
+      </div>
+      <div class="result-bar">
+        <span style="width:100px">Proposal #2</span>
+        <div style="flex:1;background:#1e2340;border-radius:6px"><div class="bar-fill" style="width:44%;background:#3d5afe"></div></div>
+        <span style="width:50px;text-align:right">28</span>
+      </div>
+      <div class="result-bar">
+        <span style="width:100px">Proposal #3</span>
+        <div style="flex:1;background:#1e2340;border-radius:6px"><div class="bar-fill" style="width:100%;background:#00c853"></div></div>
+        <span style="width:50px;text-align:right">63</span>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <p>Built on Midnight Network — your vote, your secret. The tally, everyone's truth.</p>
+    <p style="margin-top:.5rem;font-size:.75rem;color:#3a3f5a">Live demo — static preview. Connect Lace wallet for live interaction.</p>
+  </footer>
+  <div class="netlify-badge">
+    <a href="https://github.com/OAKVISUALZ/midnight-private-voting"><img src="https://api.netlify.com/api/v1/badges/placeholder/deploy-status" alt="Deploy Status"/></a>
+  </div>
+</div>
+</body>
+</html>

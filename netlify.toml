@@ -1,0 +1,9 @@
+[build]
+  command = "echo 'Static site - no build required'"
+  publish = "demo"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"

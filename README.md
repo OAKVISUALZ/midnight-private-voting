@@ -58,7 +58,7 @@ midnight-moonshot/
 
 ```bash
 # Clone and install
-git clone <your-repo-url> midnight-moonshot
+git clone https://github.com/OAKVISUALZ/midnight-private-voting.git midnight-moonshot
 cd midnight-moonshot
 npm install
 cd packages/contract && npm install && cd ../..
@@ -119,9 +119,11 @@ npm run test:integration
 | Demo video | 📹 Record walkthrough |
 | README with privacy claim | ✅ This document |
 
+[![CI](https://github.com/OAKVISUALZ/midnight-private-voting/actions/workflows/ci.yml/badge.svg)](https://github.com/OAKVISUALZ/midnight-private-voting/actions/workflows/ci.yml)
+
 ## Submission
 
-- **GitHub:** [your-repo-link]
-- **Live demo:** [vercel-link]
+- **GitHub:** https://github.com/OAKVISUALZ/midnight-private-voting
+- **Live demo:** https://midnight-private-voting.netlify.app
 - **Preprod contract:** [explorer-link]
 - **Demo video:** [youtube-link]

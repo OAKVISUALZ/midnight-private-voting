@@ -7,3 +7,6 @@ dist/
 .DS_Store
 coverage/
 test-output.txt
+
+# Local Netlify folder
+.netlify
