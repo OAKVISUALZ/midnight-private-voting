@@ -120,6 +120,7 @@ npm run test:integration
 | README with privacy claim | ✅ This document |
 
 [![CI](https://github.com/OAKVISUALZ/midnight-private-voting/actions/workflows/ci.yml/badge.svg)](https://github.com/OAKVISUALZ/midnight-private-voting/actions/workflows/ci.yml)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/efbdc20a-fbf5-4442-87cb-a1ad4eeaa851/deploy-status)](https://app.netlify.com/projects/midnight-private-voting/deploys)
 
 ## Submission
 
