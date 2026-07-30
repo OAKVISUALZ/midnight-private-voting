@@ -23,9 +23,10 @@ export default function App() {
         <VotingDashboard
           wallet={wallet}
           contract={contract}
-          onConnect={wallet.connect}
+          onConnect={() => wallet.connect('preprod')}
           onDisconnect={wallet.disconnect}
-          onDeploy={() => wallet.api && contract.deploy(wallet.api, wallet.address!)}
+          onDeploy={() => wallet.api && contract.deploy(wallet.api)}
+          onJoin={(addr) => wallet.api && contract.joinExisting(wallet.api, addr)}
           onRegister={contract.registerVoter}
           onCastVote={contract.castVote}
         />

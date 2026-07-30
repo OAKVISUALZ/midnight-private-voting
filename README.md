@@ -25,23 +25,25 @@ The contract achieves this through three privacy mechanisms:
 ```
 midnight-moonshot/
 ├── packages/
-│   ├── contract/              # Compact smart contract & tests
+│   ├── contract/                  # Compact smart contract & tests
 │   │   ├── src/
 │   │   │   ├── private-voting.compact  # Contract source
 │   │   │   ├── index.ts                # Contract descriptor
 │   │   │   └── witnesses.ts            # Witness implementations
-│   │   ├── managed/                    # Compiled artifacts
+│   │   ├── managed/                    # Compiled artifacts (ZK keys + TS bindings)
 │   │   └── test/                       # Unit & integration tests
-│   ├── ui/                    # React + Vite frontend
+│   ├── ui/                        # React + Vite frontend
 │   │   └── src/
-│   │       ├── hooks/         # useWallet, useContract
-│   │       ├── components/    # Dashboard, Proposals, Results
-│   │       ├── providers.ts   # Midnight.js provider assembly
-│   │       └── voting.ts      # Contract API wrapper
-│   └── cli/                   # Deployment & interaction scripts
-├── docker-compose.yml         # Proof server, node, indexer
-├── compact.json               # Compiler config
-└── .env_template              # Environment template
+│   │       ├── hooks/             # useWallet (Lace connect/disconnect), useContract
+│   │       ├── components/        # VotingDashboard, ProposalList, Results
+│   │       ├── lib/               # Providers, wallet adapter, types, polyfills
+│   │       ├── voting.ts          # Contract API wrapper (deploy, join, call circuits)
+│   │       ├── App.tsx            # Root component wiring hooks to components
+│   │       └── global.d.ts        # window.midnight type declaration
+│   └── cli/                       # Deployment & interaction scripts
+├── docker-compose.yml             # Proof server, midnight-node, indexer
+├── compact.json                   # Compiler configuration
+└── .env_template                  # Environment template (seed, endpoints)
 ```
 
 ## Prerequisites
@@ -64,7 +66,7 @@ cd packages/contract && npm install && cd ../..
 # Start the proof server
 docker compose up -d proof-server
 
-# Compile the contract (requires Compact compiler)
+# Compile the contract (requires Compact compiler on Linux/WSL2)
 compact compile packages/contract/src/private-voting.compact packages/contract/managed/private-voting
 
 # Get test tokens
@@ -107,13 +109,13 @@ npm run test:integration
 
 | Requirement | Status |
 |---|---|
-| Lace wallet connect/disconnect | ✅ `useWallet` hook |
-| Circuit called from frontend | ✅ `registerVoter` and `castVote` via `VotingContractAPI` |
+| Lace wallet connect/disconnect | ✅ `useWallet` hook (polls `window.midnight`, `connect()`/`disconnect()`) |
+| Circuit called from frontend | ✅ `registerVoter` and `castVote` via `submitCallTx` |
 | Observable privacy behavior | ✅ Commitment + nullifier pattern (see Privacy Claim) |
-| Contract deployed to Preprod | ✅ `deploy.ts` script |
-| 8+ meaningful commits | ✅ See git log |
-| Public GitHub repo | ✅ |
-| Live demo link | ✅ Vercel/Netlify ready |
+| Contract deployed to Preprod | ✅ `deploy.ts` script using `deployContract` |
+| 8+ meaningful commits | ✅ 10 commits (see `git log`) |
+| Public GitHub repo | ✅ Push to your GitHub |
+| Live demo link | ✅ Ready for Vercel/Netlify |
 | Demo video | 📹 Record walkthrough |
 | README with privacy claim | ✅ This document |
 

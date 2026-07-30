@@ -7,6 +7,7 @@ interface VotingDashboardProps {
   onConnect: () => void;
   onDisconnect: () => void;
   onDeploy: () => void;
+  onJoin: (address: string) => void;
   onRegister: () => void;
   onCastVote: (proposalId: number) => void;
 }
@@ -22,8 +23,6 @@ export function VotingDashboard({
   onRegister,
   onCastVote,
 }: VotingDashboardProps) {
-  const isConnected = !!wallet.api;
-
   return (
     <section className="card">
       <h2>Voting Dashboard</h2>
@@ -37,30 +36,30 @@ export function VotingDashboard({
       )}
 
       <div className="wallet-section">
-        {!isConnected ? (
-          <button onClick={onConnect} disabled={wallet.isConnecting}>
-            {wallet.isConnecting ? 'Connecting...' : 'Connect Lace Wallet'}
-          </button>
+        {!wallet.api ? (
+          <div>
+            {wallet.detecting ? (
+              <p style={{ color: '#8891b0' }}>Detecting Midnight wallet...</p>
+            ) : (
+              <button onClick={onConnect} disabled={wallet.isConnecting}>
+                {wallet.isConnecting ? 'Connecting...' : 'Connect Lace Wallet'}
+              </button>
+            )}
+          </div>
         ) : (
           <div className="wallet-info">
             <div className="wallet-row">
               <span className="label">Wallet:</span>
-              <span className="value mono">{wallet.address?.slice(0, 20)}...</span>
+              <span className="value mono">{wallet.address?.slice(0, 24)}...</span>
               <button className="btn-sm" onClick={onDisconnect}>
                 Disconnect
               </button>
             </div>
-            {wallet.balance && (
-              <div className="wallet-row">
-                <span className="label">Balance:</span>
-                <span className="value">{wallet.balance} tNIGHT</span>
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      {isConnected && !contract.contract && (
+      {wallet.api && !contract.contract && (
         <div className="action-row">
           <button onClick={onDeploy} disabled={contract.isDeploying}>
             {contract.isDeploying ? 'Deploying...' : 'Deploy Contract to Preprod'}
@@ -68,11 +67,11 @@ export function VotingDashboard({
         </div>
       )}
 
-      {isConnected && contract.contractAddress && (
+      {contract.contractAddress && (
         <div className="contract-info">
           <div className="wallet-row">
             <span className="label">Contract:</span>
-            <span className="value mono">{contract.contractAddress.slice(0, 20)}...</span>
+            <span className="value mono">{contract.contractAddress.slice(0, 24)}...</span>
           </div>
           <div className="wallet-row">
             <span className="label">Voters:</span>
@@ -86,7 +85,7 @@ export function VotingDashboard({
           <button onClick={onRegister} disabled={contract.isRegistering}>
             {contract.isRegistering ? 'Registering...' : 'Register to Vote'}
           </button>
-          <span style={{ color: '#8891b0', fontSize: '0.85rem', marginLeft: '0.5rem' }}>
+          <span style={{ color: '#8891b0', fontSize: '0.85rem' }}>
             Your identity stays private on-chain
           </span>
         </div>
@@ -95,7 +94,7 @@ export function VotingDashboard({
       {contract.contract && (
         <div className="action-row">
           <span style={{ color: '#8891b0', fontSize: '0.85rem', alignSelf: 'center' }}>
-            Cast your anonymous vote:
+            Cast vote:
           </span>
           {PROPOSAL_IDS.map(id => (
             <button

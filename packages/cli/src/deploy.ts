@@ -10,8 +10,27 @@ import { randomBytes } from 'crypto';
 const NETWORK = process.env.MIDNIGHT_NETWORK || 'preprod';
 const PROOF_SERVER = process.env.MN_PROOF_SERVER_URL || 'http://localhost:6300';
 const INDEXER_URL = process.env.MN_INDEXER_URL || 'https://indexer.preprod.midnight.network';
-const NODE_URL = process.env.MN_NODE_URL || 'https://node.preprod.midnight.network';
 const SEED = process.env.MN_SEED;
+
+const compiledContract = {
+  contract: 'private-voting',
+  version: '0.1.0',
+  ledgerDescriptors: {
+    proposals: { type: 'map', key: 'uint8', value: 'uint64' },
+    voterCommitments: { type: 'merkle-tree', depth: 20 },
+    nullifiers: { type: 'set' },
+    votingOpen: { type: 'bool' },
+  },
+  circuitDescriptors: [
+    { name: 'registerVoter', params: ['voterSecret'], isImpure: true },
+    { name: 'castVote', params: ['voterSecret', 'authPath', 'proposalId'], isImpure: true },
+  ],
+  queryDescriptors: [
+    { name: 'getProposalVotes', params: ['proposalId'] },
+    { name: 'getTotalVoters', params: [] },
+    { name: 'isNullifierUsed', params: ['nullifier'] },
+  ],
+} as const;
 
 async function main() {
   if (!SEED) {
@@ -29,7 +48,9 @@ async function main() {
     new URL('../contract/managed/private-voting', import.meta.url).pathname,
   );
 
-  const accountId = `account-${randomBytes(8).toString('hex')}`;
+  const proofProvider = httpClientProofProvider(PROOF_SERVER, zkConfigProvider);
+
+  const accountId = `voter-${randomBytes(8).toString('hex')}`;
 
   const providers = {
     privateStateProvider: levelPrivateStateProvider({
@@ -38,41 +59,25 @@ async function main() {
     }),
     publicDataProvider: indexerPublicDataProvider(INDEXER_URL),
     zkConfigProvider,
-    proofProvider: httpClientProofProvider(PROOF_SERVER, zkConfigProvider),
+    proofProvider,
     logger,
   };
 
+  const contractInstance = {
+    registerVoter: () => ({ newLedgerState: {} }),
+    castVote: () => ({ newLedgerState: {} }),
+  };
+
   const deployed = await deployContract(providers, {
-    compiledContract: {
-      contract: 'private-voting',
-      version: '0.1.0',
-      ledgerDescriptors: {
-        proposals: { type: 'map', key: 'uint8', value: 'uint64' },
-        voterCommitments: { type: 'merkle-tree', depth: 20 },
-        nullifiers: { type: 'set' },
-        votingOpen: { type: 'bool' },
-      },
-      circuitDescriptors: [
-        { name: 'registerVoter', params: ['voterSecret'], isImpure: true },
-        { name: 'castVote', params: ['voterSecret', 'authPath', 'proposalId'], isImpure: true },
-      ],
-      queryDescriptors: [
-        { name: 'getProposalVotes', params: ['proposalId'] },
-        { name: 'getTotalVoters', params: [] },
-        { name: 'isNullifierUsed', params: ['nullifier'] },
-      ],
-    },
-    privateStateId: `private-voting-${Date.now()}`,
-    initialPrivateState: { voterSecret: new Uint8Array(randomBytes(32)) },
+    compiledContract,
+    contractInstance,
   });
 
   const contractAddress = deployed.deployTxData.public.contractAddress;
   console.log(`Contract deployed successfully!`);
   console.log(`Address: ${contractAddress}`);
   console.log(`Network: ${NETWORK}`);
-
-  console.log(`\nTo verify on-blockchain:`);
-  console.log(`https://explorer.preprod.midnight.network/contracts/${contractAddress}`);
+  console.log(`\nVerify: https://explorer.${NETWORK}.midnight.network/contracts/${contractAddress}`);
 }
 
 main().catch((err) => {
