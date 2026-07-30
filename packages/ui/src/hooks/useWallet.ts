@@ -6,6 +6,7 @@ export interface WalletState {
   initialAPI: InitialAPI | null;
   address: string | null;
   isConnecting: boolean;
+  detecting: boolean;
   error: string | null;
 }
 
@@ -29,6 +30,7 @@ export function useWallet() {
     initialAPI: null,
     address: null,
     isConnecting: false,
+    detecting: true,
     error: null,
   });
   const [availableWallets, setAvailableWallets] = useState<InitialAPI[]>([]);
@@ -67,6 +69,7 @@ export function useWallet() {
         initialAPI: wallet,
         address: unshielded.unshieldedAddress,
         isConnecting: false,
+        detecting: false,
         error: null,
       });
     } catch (err) {
@@ -79,8 +82,8 @@ export function useWallet() {
   }, []);
 
   const disconnect = useCallback(() => {
-    setState({ api: null, initialAPI: null, address: null, isConnecting: false, error: null });
+    setState({ api: null, initialAPI: null, address: null, isConnecting: false, detecting: false, error: null });
   }, []);
 
-  return { ...state, availableWallets, detecting, connect, disconnect };
+  return { ...state, availableWallets, connect, disconnect };
 }

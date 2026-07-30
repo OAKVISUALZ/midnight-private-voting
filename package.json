@@ -15,5 +15,9 @@
     "deploy": "npm run deploy --workspace=packages/cli",
     "lint": "npm run lint --workspace=packages/ui",
     "setup": "npm install && cd packages/contract && npm install"
+  },
+  "dependencies": {
+    "effect": "^3.0.0",
+    "vite-plugin-wasm": "^3.6.0"
   }
 }

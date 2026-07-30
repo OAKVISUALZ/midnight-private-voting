@@ -9,6 +9,10 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@apollo/client": "^4.2.8",
+    "@midnight-ntwrk/compact-runtime": "^0.15.0",
+    "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
+    "@midnight-ntwrk/ledger-v8": "^8.0.0",
     "@midnight-ntwrk/midnight-js-contracts": "^4.0.4",
     "@midnight-ntwrk/midnight-js-dapp-connector-proof-provider": "^4.0.4",
     "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "^4.0.4",
@@ -18,9 +22,7 @@
     "@midnight-ntwrk/midnight-js-logger-provider": "^4.0.4",
     "@midnight-ntwrk/midnight-js-network-id": "^4.0.4",
     "@midnight-ntwrk/midnight-js-types": "^4.0.4",
-    "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
-    "@midnight-ntwrk/ledger-v8": "^8.0.0",
-    "@midnight-ntwrk/compact-runtime": "^0.15.0",
+    "effect": "^3.22.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

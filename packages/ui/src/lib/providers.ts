@@ -6,9 +6,7 @@ import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import { createWalletProvidersFromConnectedAPI } from './walletAdapter.js';
 
-export async function buildProviders(
-  connectedAPI: ConnectedAPI,
-): Promise<MidnightProviders> {
+export async function buildProviders(connectedAPI: ConnectedAPI): Promise<MidnightProviders> {
   const config = await connectedAPI.getConfiguration();
 
   const shieldedAddresses = await connectedAPI.getShieldedAddresses();
@@ -22,10 +20,7 @@ export async function buildProviders(
     fetch.bind(window),
   );
 
-  const proofProvider = httpClientProofProvider(
-    config.proverServerUri!,
-    zkConfigProvider,
-  );
+  const proofProvider = httpClientProofProvider(config.proverServerUri!, zkConfigProvider);
 
   const { walletProvider, midnightProvider } = createWalletProvidersFromConnectedAPI(
     connectedAPI,
@@ -40,10 +35,7 @@ export async function buildProviders(
     accountId: shieldedAddr,
   });
 
-  const publicDataProvider = indexerPublicDataProvider(
-    config.indexerUri,
-    config.indexerWsUri,
-  );
+  const publicDataProvider = indexerPublicDataProvider(config.indexerUri, config.indexerWsUri);
 
   return {
     privateStateProvider,

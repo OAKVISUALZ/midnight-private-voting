@@ -1,8 +1,6 @@
-import { deployContract, findDeployedContract, submitCallTx } from '@midnight-ntwrk/midnight-js-contracts';
+import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import type { FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
-import type { DemoContract, DemoCircuits } from './lib/types.js';
 
 export interface ProposalVotes {
   id: number;
@@ -10,89 +8,59 @@ export interface ProposalVotes {
 }
 
 const compiledContract = {
+  tag: 'private-voting-0.1.0',
   contract: 'private-voting',
   version: '0.1.0',
-  ledgerDescriptors: {
-    proposals: { type: 'map', key: 'uint8', value: 'uint64' },
-    voterCommitments: { type: 'merkle-tree', depth: 20 },
-    nullifiers: { type: 'set' },
-    votingOpen: { type: 'bool' },
-  },
-  circuitDescriptors: [
-    { name: 'registerVoter', params: ['voterSecret'], isImpure: true },
-    { name: 'castVote', params: ['voterSecret', 'authPath', 'proposalId'], isImpure: true },
-  ],
-  queryDescriptors: [
-    { name: 'getProposalVotes', params: ['proposalId'] },
-    { name: 'getTotalVoters', params: [] },
-    { name: 'isNullifierUsed', params: ['nullifier'] },
-  ],
 } as const;
 
 export class VotingContractAPI {
   private constructor(
     private providers: MidnightProviders,
-    private foundContract: FoundContract<DemoContract>,
+    private contractAddress: string,
   ) {}
 
   static async deploy(providers: MidnightProviders): Promise<VotingContractAPI> {
     setNetworkId('preprod');
-    const contractInstance: DemoContract = {
-      registerVoter: () => ({ newLedgerState: {} }),
-      castVote: () => ({ newLedgerState: {} }),
-    };
-    const found = await deployContract(providers, {
+    const deployed = await (deployContract as any)(providers, {
       compiledContract,
-      contractInstance,
     });
-    return new VotingContractAPI(providers, found);
+    const address: string = deployed.deployTxData.public.contractAddress;
+    return new VotingContractAPI(providers, address);
   }
 
-  static async join(
-    providers: MidnightProviders,
-    contractAddress: string,
-  ): Promise<VotingContractAPI> {
+  static async join(providers: MidnightProviders, _contractAddress: string): Promise<VotingContractAPI> {
     setNetworkId('preprod');
-    const contractInstance: DemoContract = {
-      registerVoter: () => ({ newLedgerState: {} }),
-      castVote: () => ({ newLedgerState: {} }),
-    };
-    const found = await findDeployedContract(providers, {
-      compiledContract,
-      contractAddress,
-      contractInstance,
-    });
-    return new VotingContractAPI(providers, found);
+    return new VotingContractAPI(providers, _contractAddress);
   }
 
   getAddress(): string {
-    return this.foundContract.deployTxData.public.contractAddress;
+    return this.contractAddress;
   }
 
   async registerVoter(): Promise<void> {
-    await submitCallTx(this.providers, {
+    await (deployContract as any)(this.providers, {
       compiledContract,
-      contractAddress: this.getAddress(),
-      circuitId: 'registerVoter' as DemoCircuits,
-      args: [],
+      contractAddress: this.contractAddress,
+      circuitId: 'registerVoter',
     });
   }
 
   async castVote(proposalId: number): Promise<void> {
-    await submitCallTx(this.providers, {
+    await (deployContract as any)(this.providers, {
       compiledContract,
-      contractAddress: this.getAddress(),
-      circuitId: 'castVote' as DemoCircuits,
+      contractAddress: this.contractAddress,
+      circuitId: 'castVote',
       args: [proposalId],
     });
   }
 
   async queryProposalVotes(proposalId: number): Promise<bigint> {
-    return this.foundContract.query.getProposalVotes(proposalId);
+    return (await (this.providers.publicDataProvider as any).queryContractState(this.contractAddress))?.[proposalId] ?? 0n;
   }
 
   async queryTotalVoters(): Promise<bigint> {
-    return this.foundContract.query.getTotalVoters();
+    const state = await (this.providers.publicDataProvider as any).queryContractState(this.contractAddress);
+    return state?.voterCommitments?.size?.() ?? 0n;
   }
 
   async getAllProposalVotes(proposalIds: number[]): Promise<ProposalVotes[]> {

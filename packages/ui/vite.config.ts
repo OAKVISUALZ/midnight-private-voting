@@ -1,10 +1,18 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import wasm from 'vite-plugin-wasm';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), wasm()],
   server: { port: 5173 },
+  build: {
+    target: 'esnext',
+  },
+  worker: {
+    format: 'es',
+  },
   optimizeDeps: {
+    exclude: ['@midnight-ntwrk/ledger-v8'],
     include: [
       '@midnight-ntwrk/midnight-js-contracts',
       '@midnight-ntwrk/midnight-js-network-id',

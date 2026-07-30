@@ -1,6 +1,6 @@
 import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
-import type { ProofProvider, WalletProvider, ZKConfigProvider } from '@midnight-ntwrk/midnight-js-types';
-import { type FinalizedTransaction, type UnboundTransaction, type Transaction, type Proof, type Binding, type SignatureEnabled } from '@midnight-ntwrk/ledger-v8';
+import type { WalletProvider, UnboundTransaction, ZKConfigProvider } from '@midnight-ntwrk/midnight-js-types';
+import { Transaction, type FinalizedTransaction, type Proof, type Binding, type SignatureEnabled } from '@midnight-ntwrk/ledger-v8';
 
 function uint8ArrayToHex(bytes: Uint8Array): string {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -14,17 +14,18 @@ function hexToUint8Array(hex: string): Uint8Array {
 
 export function createWalletProvidersFromConnectedAPI(
   connectedAPI: ConnectedAPI,
-  proofProvider: ProofProvider,
-  zkConfigProvider: ZKConfigProvider<string>,
-  shieldedAddress: string,
-  unshieldedAddress: string,
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  _proofProvider: any,
+  _zkConfigProvider: ZKConfigProvider<string>,
+  shieldedCoinPublicKey: string,
+  _unshieldedAddress: string,
 ) {
   const walletProvider: WalletProvider = {
     getCoinPublicKey() {
-      return shieldedAddress;
+      return shieldedCoinPublicKey;
     },
     getEncryptionPublicKey() {
-      return shieldedAddress;
+      return shieldedCoinPublicKey;
     },
     async balanceTx(tx: UnboundTransaction): Promise<FinalizedTransaction> {
       const serialized = tx.serialize();
