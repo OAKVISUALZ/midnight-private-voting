@@ -1,0 +1,13 @@
+{
+  "name": "@midnight-private-voting/cli",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "tsx src/deploy.ts",
+    "interact": "tsx src/interact.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
