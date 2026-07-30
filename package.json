@@ -1,9 +1,19 @@
 {
   "name": "midnight-private-voting",
   "private": true,
+  "workspaces": [
+    "packages/contract",
+    "packages/cli",
+    "packages/ui"
+  ],
   "scripts": {
+    "dev": "npm run dev --workspace=packages/ui",
+    "build": "npm run build --workspace=packages/ui",
     "test": "npm run test --workspace=packages/contract",
     "test:unit": "npm run test:unit --workspace=packages/contract",
-    "test:integration": "npm run test:integration --workspace=packages/contract"
+    "test:integration": "npm run test:integration --workspace=packages/contract",
+    "deploy": "npm run deploy --workspace=packages/cli",
+    "lint": "npm run lint --workspace=packages/ui",
+    "setup": "npm install && cd packages/contract && npm install"
   }
 }

@@ -9,16 +9,48 @@ body {
 header { text-align: center; margin-bottom: 2rem; }
 header h1 { font-size: 2rem; color: #b388ff; }
 header p { color: #8891b0; margin: 0.5rem 0 1rem; }
+.deployed-badge {
+  font-size: 0.85rem;
+  color: #00c853;
+  background: #1a2e1a;
+  border: 1px solid #00c85340;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  display: inline-block;
+}
 button {
   background: #7c4dff; color: #fff; border: none; padding: 0.6rem 1.4rem;
   border-radius: 8px; cursor: pointer; font-size: 0.95rem;
+  transition: background 0.2s, opacity 0.2s;
 }
 button:hover { background: #651fff; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-sm { font-size: 0.8rem; padding: 0.3rem 0.8rem; }
 .card {
   background: #131626; border: 1px solid #252a4a; border-radius: 12px;
   padding: 1.5rem; margin-bottom: 1.5rem;
 }
 .card h2 { font-size: 1.2rem; margin-bottom: 1rem; color: #b388ff; }
+.wallet-section { margin-bottom: 1rem; }
+.wallet-info { display: flex; flex-direction: column; gap: 0.5rem; }
+.wallet-row { display: flex; align-items: center; gap: 0.5rem; }
+.wallet-row .label { color: #8891b0; font-size: 0.85rem; min-width: 70px; }
+.wallet-row .value { color: #e0e3f0; }
+.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; }
+.error-banner {
+  background: #3a1010; border: 1px solid #ff174440;
+  color: #ff8a80; padding: 0.6rem 1rem; border-radius: 8px;
+  margin-bottom: 1rem; font-size: 0.85rem;
+}
+.action-row {
+  display: flex; gap: 0.5rem; margin-top: 1rem;
+  flex-wrap: wrap; align-items: center;
+}
+.contract-info {
+  margin-top: 1rem; padding: 0.8rem;
+  background: #0f1225; border-radius: 8px;
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
 .proposal-item {
   display: flex; justify-content: space-between; align-items: center;
   padding: 0.8rem 0; border-bottom: 1px solid #1e2340;

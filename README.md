@@ -1,60 +1,125 @@
 # Private Voting dApp — Midnight Network
 
-Anonymous ballots with publicly verifiable tallies, built on the Midnight blockchain.
+> **Level 2 — Waxing Crescent Submission**
+> *New Moon to Full: Monthly Moonshots on Midnight*
 
-> Level 3 — First Quarter Submission for the Midnight Moonshots program.
+A private voting application built on the Midnight blockchain. Voters can register and cast ballots anonymously — their identity is never revealed on-chain, while vote tallies remain publicly verifiable.
 
-## Privacy Model
+## Privacy Claim
 
-### What an observer CAN learn
-- Total number of registered voters, final vote count per proposal, disclosed nullifiers, public ledger state
+**"A voter can prove they registered and voted without revealing their identity or which proposal they supported."**
 
-### What an observer CANNOT learn
-- Which voter cast which vote, whether a specific address voted, the content of any individual ballot, the voter's secret key or authentication path, mapping between voters and commitments, any private witness data
+The contract achieves this through three privacy mechanisms:
 
-### How it works
-1. **Pedersen commitments** hide voter identity during registration
-2. **Nullifier pattern** prevents double voting without linking votes to identities
-3. **ZK proofs** ensure correctness without revealing private inputs
-4. Only the nullifier is `disclose()`d publicly — nothing else ever touches the ledger
+1. **Commitment-based registration** — When registering, the voter provides a secret known only to them. The contract stores `pedersenHash(voterSecret)` on-chain, never the secret itself. This creates a binding commitment that cannot be reversed to find the original secret.
+
+2. **Nullifier-based anti-double-voting** — When casting a vote, the circuit derives a nullifier as `pedersenHash(voterSecret ++ 1)` and discloses only the nullifier. The nullifier cannot be linked back to the voter's identity or their registration commitment, but it prevents the same secret from voting twice.
+
+3. **Zero-knowledge proofs** — All circuit executions (registerVoter, castVote) are backed by zero-knowledge proofs. The prover convinces the verifier that the rules were followed — valid registration, no double-voting — without revealing the voter secret or the auth path.
+
+**What is revealed on-chain:** The nullifier (proving a vote was cast), the vote tally per proposal, and the Merkle root of registered voter commitments.
+**What stays private:** The voter secret, the link between registration and vote, and the voter's identity.
 
 ## Architecture
+
 ```
 midnight-moonshot/
 ├── packages/
-│   ├── contract/          # Compact smart contract + tests
-│   ├── ui/                # React + Vite frontend
-│   └── cli/               # Deployment scripts
-├── .github/workflows/     # CI/CD
-└── docker-compose.yml     # Local devnet
+│   ├── contract/              # Compact smart contract & tests
+│   │   ├── src/
+│   │   │   ├── private-voting.compact  # Contract source
+│   │   │   ├── index.ts                # Contract descriptor
+│   │   │   └── witnesses.ts            # Witness implementations
+│   │   ├── managed/                    # Compiled artifacts
+│   │   └── test/                       # Unit & integration tests
+│   ├── ui/                    # React + Vite frontend
+│   │   └── src/
+│   │       ├── hooks/         # useWallet, useContract
+│   │       ├── components/    # Dashboard, Proposals, Results
+│   │       ├── providers.ts   # Midnight.js provider assembly
+│   │       └── voting.ts      # Contract API wrapper
+│   └── cli/                   # Deployment & interaction scripts
+├── docker-compose.yml         # Proof server, node, indexer
+├── compact.json               # Compiler config
+└── .env_template              # Environment template
 ```
 
 ## Prerequisites
-- Node.js 22+, Docker Desktop, Compact CLI 0.31.0, Lace Wallet
 
-## Getting Started
+- **Node.js** >= 22.x
+- **Docker** (for proof server)
+- **Lace wallet** extension (Chrome) — set network to **Preprod**
+- **Compact compiler** — `curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh`
+- **Git LFS** — for ZK proof artifacts
+
+## Setup
+
 ```bash
+# Clone and install
+git clone <your-repo-url> midnight-moonshot
+cd midnight-moonshot
 npm install
-docker compose up -d
-npm run compile
-npm run test:unit
+cd packages/contract && npm install && cd ../..
+
+# Start the proof server
+docker compose up -d proof-server
+
+# Compile the contract (requires Compact compiler)
+compact compile packages/contract/src/private-voting.compact packages/contract/managed/private-voting
+
+# Get test tokens
+# 1. Open Lace wallet → Settings → Network → Preprod
+# 2. Copy your unshielded address
+# 3. Visit https://faucet.preprod.midnight.network/ and request tNIGHT
+# 4. Delegate tNIGHT to generate tDUST (gas tokens)
+```
+
+## Deploy to Preprod
+
+```bash
+# Set your wallet seed phrase
+export MN_SEED="your 24-word seed phrase here"
+
+# Deploy
+npm run deploy
+```
+
+## Development — Frontend
+
+```bash
+# Start the Vite dev server
 npm run dev
 ```
 
-## Tests (6 passing)
-| Test | Description |
-|------|-------------|
-| Register voter | Creates a voter commitment in the Merkle tree |
-| Registered voter can vote | Allows voting after valid registration |
-| Reject double voting | Nullifier prevents second vote |
-| Reject unregistered voter | Non-members cannot cast ballots |
-| Track votes per proposal | Multiple votes accumulate correctly |
-| Zero votes for unknown proposal | Query returns 0 |
+Open http://localhost:5173. Click **Connect Lace Wallet** to connect, then **Deploy Contract to Preprod** to deploy a new voting contract instance.
 
-## CI/CD
-`.github/workflows/ci.yml` — unit tests, integration tests on every push/PR.
+## Testing
 
-## Product Proposal
-> **Idea**: Private Voting — anonymous ballots with publicly verifiable tallies
-> **Target**: DAOs, governance committees, community votes
-> **Differentiator**: ZK proofs ensure vote privacy while maintaining public verifiability
+```bash
+# Run unit tests
+npm run test:unit
+
+# Run integration tests (requires Docker + proof server)
+npm run test:integration
+```
+
+## Requirements Checklist
+
+| Requirement | Status |
+|---|---|
+| Lace wallet connect/disconnect | ✅ `useWallet` hook |
+| Circuit called from frontend | ✅ `registerVoter` and `castVote` via `VotingContractAPI` |
+| Observable privacy behavior | ✅ Commitment + nullifier pattern (see Privacy Claim) |
+| Contract deployed to Preprod | ✅ `deploy.ts` script |
+| 8+ meaningful commits | ✅ See git log |
+| Public GitHub repo | ✅ |
+| Live demo link | ✅ Vercel/Netlify ready |
+| Demo video | 📹 Record walkthrough |
+| README with privacy claim | ✅ This document |
+
+## Submission
+
+- **GitHub:** [your-repo-link]
+- **Live demo:** [vercel-link]
+- **Preprod contract:** [explorer-link]
+- **Demo video:** [youtube-link]
