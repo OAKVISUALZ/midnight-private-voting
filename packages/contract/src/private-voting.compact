@@ -6,12 +6,13 @@ export ledger nullifiers: Set<Field>;
 export ledger votingOpen: Boolean;
 
 constructor(open: Boolean) {
-  votingOpen = open;
+  votingOpen = disclose(open);
 }
 
 export circuit registerVoter(voterSecret: Field): [] {
   assert(votingOpen, "Registration is closed");
-  const commitment = transientHash<Field>(voterSecret);
+  const dSecret = disclose(voterSecret);
+  const commitment = transientHash<Field>(dSecret);
   voterCommitments.insert(commitment);
 }
 
@@ -21,14 +22,20 @@ export circuit castVote(
   proposalId: Field,
 ): [] {
   assert(votingOpen, "Voting is closed");
-  const commitment = transientHash<Field>(voterSecret);
-  const digest = merkleTreePathRoot<20, Field>(authPath);
+  const dSecret = disclose(voterSecret);
+  const dPath = disclose(authPath);
+  const dProposal = disclose(proposalId);
+
+  const commitment = transientHash<Field>(dSecret);
+  const digest = merkleTreePathRoot<20, Field>(dPath);
   assert(voterCommitments.checkRoot(digest) == true, "Voter not registered");
-  const nullifier = transientHash<Vector<2, Field>>([voterSecret, 1]);
+
+  const nullifier = transientHash<Vector<2, Field>>([dSecret, 1]);
   assert(!nullifiers.member(nullifier), "Already voted");
   nullifiers.insert(nullifier);
-  if (!proposals.member(proposalId)) {
-    proposals.insert(proposalId, default<Counter>);
+
+  if (!proposals.member(dProposal)) {
+    proposals.insert(dProposal, default<Counter>);
   }
-  proposals.lookup(proposalId).increment(1);
+  proposals.lookup(dProposal).increment(1);
 }
