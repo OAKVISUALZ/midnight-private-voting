@@ -66,17 +66,12 @@ if (!fs.existsSync(contractPath)) {
 
 const PrivateVoting = await import(pathToFileURL(contractPath).href);
 
-// Witnesses as declared by the generated contract bindings
-// (packages/contract/managed/private-voting/contract/index.d.ts). The public
-// `open` parameter of the construct circuit is passed via deployContract args.
-const witnesses = {
-  construct: () => ({}),
-  registerVoter: (ctx: any) => ({ voterSecret: ctx.privateState.voterSecret }),
-  castVote: (ctx: any) => ({ voterSecret: ctx.privateState.voterSecret }),
-};
-
+// The Private Voting contract declares no `witness` functions: voterSecret,
+// authPath and proposalId are public circuit arguments. The compiler still
+// requires the witnesses object to be supplied (here: an empty one), and the
+// constructor's public `open` parameter is passed via deployContract args.
 const compiledContract = CompiledContract.make('private-voting', PrivateVoting.Contract).pipe(
-  CompiledContract.withWitnesses(witnesses),
+  CompiledContract.withWitnesses({}),
   CompiledContract.withCompiledFileAssets(zkConfigPath),
 );
 
