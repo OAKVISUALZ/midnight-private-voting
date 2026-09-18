@@ -7,8 +7,8 @@
     "test:unit": "vitest run test/voting.unit.test.ts",
     "test:integration": "vitest run test/voting.integration.test.ts",
     "test:watch": "vitest",
-    "compile": "compact compile src/private-voting.compact",
-    "compile:skipzk": "compact compile --skip-zk src/private-voting.compact"
+    "compile": "compact compile src/private-voting.compact managed/private-voting",
+    "compile:skipzk": "compact compile --skip-zk src/private-voting.compact managed/private-voting"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
