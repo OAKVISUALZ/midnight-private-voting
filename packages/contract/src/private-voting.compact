@@ -1,22 +1,18 @@
 import CompactStandardLibrary;
 
-export struct VotingBox {
-  proposals: Map<Field, Counter>;
-  voterCommitments: MerkleTree<20, Field>;
-  nullifiers: Set<Field>;
-  votingOpen: Boolean;
-}
-
-export ledger voting: VotingBox;
+export ledger proposals: Map<Field, Counter>;
+export ledger voterCommitments: MerkleTree<20, Field>;
+export ledger nullifiers: Set<Field>;
+export ledger votingOpen: Boolean;
 
 constructor(open: Boolean) {
-  voting.votingOpen = open;
+  votingOpen = open;
 }
 
 export circuit registerVoter(voterSecret: Field): [] {
-  assert(voting.votingOpen, "Registration is closed");
+  assert(votingOpen, "Registration is closed");
   const commitment = transientHash<Field>(voterSecret);
-  voting.voterCommitments.insert(commitment);
+  voterCommitments.insert(commitment);
 }
 
 export circuit castVote(
@@ -24,15 +20,15 @@ export circuit castVote(
   authPath: MerkleTreePath<20, Field>,
   proposalId: Field,
 ): [] {
-  assert(voting.votingOpen, "Voting is closed");
+  assert(votingOpen, "Voting is closed");
   const commitment = transientHash<Field>(voterSecret);
   const digest = merkleTreePathRoot<20, Field>(authPath);
-  assert(voting.voterCommitments.checkRoot(digest) == true, "Voter not registered");
+  assert(voterCommitments.checkRoot(digest) == true, "Voter not registered");
   const nullifier = transientHash<Vector<2, Field>>([voterSecret, 1]);
-  assert(!voting.nullifiers.member(nullifier), "Already voted");
-  voting.nullifiers.insert(nullifier);
-  if (!voting.proposals.member(proposalId)) {
-    voting.proposals.insert(proposalId, default<Counter>);
+  assert(!nullifiers.member(nullifier), "Already voted");
+  nullifiers.insert(nullifier);
+  if (!proposals.member(proposalId)) {
+    proposals.insert(proposalId, default<Counter>);
   }
-  voting.proposals.lookup(proposalId).increment(1);
+  proposals.lookup(proposalId).increment(1);
 }

@@ -295,9 +295,7 @@ async function main() {
   while (Date.now() - verifyStart < 60_000) {
     try {
       const ledger: any = await publicDataProvider.queryContractState(contractAddress);
-      // The ledger is a single exported field `voting: VotingBox`; an older
-      // deployment shape also exists under the bare `votingOpen` key — check both.
-      votingOpen = ledger?.voting?.votingOpen ?? ledger?.votingOpen;
+      votingOpen = ledger?.votingOpen;
       if (votingOpen === true) break;
     } catch (err: any) {
       const msg = err?.message || '';
