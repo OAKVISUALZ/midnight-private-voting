@@ -1,6 +1,7 @@
 {
   "name": "midnight-private-voting",
   "private": true,
+  "type": "module",
   "workspaces": [
     "packages/contract",
     "packages/cli",

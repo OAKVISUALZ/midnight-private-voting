@@ -1,0 +1,154 @@
+name: Deploy to Preprod
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: Midnight network to compile against and deploy to
+        type: choice
+        required: true
+        default: preprod
+        options:
+          - preprod
+          - preview
+      commit-artifacts:
+        description: Commit the compiled managed/ artifacts and deployment record back to the repo
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-${{ inputs.network }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MIDNIGHT_NETWORK: ${{ inputs.network }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Compact developer tools
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf \
+            https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+          echo "$HOME/.compact/bin" >> "$GITHUB_PATH"
+
+      # Toolchain pinned to the version in compact.json (0.31.0).
+      - name: Install Compact toolchain
+        run: compact update "0.31.0"
+
+      - name: Show toolchain versions
+        run: |
+          compact --version
+          compact compile --version
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile contract
+        run: npm run compile --workspace=packages/contract
+
+      - name: List compiled artifacts
+        run: find packages/contract/managed -maxdepth 3 -type f | sort
+
+      - name: Require funded wallet seed for public networks
+        env:
+          SEED: ${{ secrets.MIDNIGHT_WALLET_SEED || secrets.MN_SEED }}
+          NETWORK: ${{ inputs.network }}
+        run: |
+          if [ -z "$SEED" ]; then
+            echo "::error title=Missing secret::Set a repository secret named MIDNIGHT_WALLET_SEED (or MN_SEED) to a funded 64-char hex wallet seed, then re-run. Derive the address to fund with: npx tsx scripts/derive-address.ts <seed> ${{ inputs.network }}"
+            exit 1
+          fi
+          ADDR=$(npx tsx scripts/derive-address.ts "$SEED" "$NETWORK")
+          echo "Network:      $NETWORK"
+          echo "Wallet seed:  set (repository secret)"
+          echo "Address:      $ADDR"
+          echo "Faucet:       https://faucet.${{ inputs.network }}.midnight.network (human captcha)"
+          echo "The deploy step below polls for tNIGHT for ~10 minutes; if this wallet has"
+          echo "no balance yet, open the faucet and request tokens for the address above."
+
+      - name: Deploy contract to ${{ inputs.network }}
+        env:
+          MIDNIGHT_WALLET_SEED: ${{ secrets.MIDNIGHT_WALLET_SEED || secrets.MN_SEED }}
+          MIDNIGHT_FAUCET_TIMEOUT_MS: 600000
+        run: npm run deploy --workspace=packages/cli
+
+      - name: Capture deployment record
+        id: deployment-record
+        env:
+          NETWORK: ${{ inputs.network }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const state = JSON.parse(fs.readFileSync(".midnight-state.json", "utf8"));
+            const dep = state.deployments[process.env.NETWORK];
+            if (!dep) { console.error("No deployment record for " + process.env.NETWORK); process.exit(1); }
+            process.stdout.write(JSON.stringify(dep, null, 2) + "\n");
+          ' | tee deployment-record.json
+          echo "address=$(node -e 'const fs=require(\"fs\"); const d=JSON.parse(fs.readFileSync(\"deployment-record.json\",\"utf8\")); process.stdout.write(d.address)')" >> "$GITHUB_OUTPUT"
+
+      - name: Write DEPLOYMENT.md
+        if: inputs.commit-artifacts == true
+        env:
+          NETWORK: ${{ inputs.network }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const dep = require("./deployment-record.json");
+            fs.writeFileSync("DEPLOYMENT.md",
+              "# Deployment record\n\n" +
+              "- Network: `" + process.env.NETWORK + "`\n" +
+              "- Contract address: `" + dep.address + "`\n" +
+              "- Deployer: `" + dep.deployer + "`\n" +
+              "- Deployed at: " + dep.deployedAt + "\n" +
+              "- Verify: https://explorer." + process.env.NETWORK + ".midnight.network/contracts/" + dep.address + "\n" +
+              "- Deployed by: the `Deploy to Preprod` workflow (`npm run deploy` via the CLI package)\n"
+            );
+          '
+
+      - name: Update README with deployed address
+        if: inputs.commit-artifacts == true
+        env:
+          NETWORK: ${{ inputs.network }}
+          ADDRESS: ${{ steps.deployment-record.outputs.address }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const url = "https://explorer." + process.env.NETWORK + ".midnight.network/contracts/" + process.env.ADDRESS;
+            let readme = fs.readFileSync("README.md", "utf8");
+            const placeholder = "[explorer-link]";
+            if (readme.includes(placeholder)) {
+              readme = readme.split(placeholder).join("`" + process.env.ADDRESS + "` — [explorer](`" + url + "`)");
+              fs.writeFileSync("README.md", readme);
+              console.log("README: replaced placeholder with deployed address");
+            } else {
+              console.log("README: placeholder not found; left as-is");
+            }
+          '
+
+      - name: Commit generated artifacts
+        if: inputs.commit-artifacts == true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/contract/managed
+          git add README.md DEPLOYMENT.md
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: commit compiled managed/ artifacts and Preprod deployment record [skip ci]"
+            git push
+          else
+            echo "No changes to commit"
+          fi

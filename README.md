@@ -78,12 +78,34 @@ compact compile packages/contract/src/private-voting.compact packages/contract/m
 
 ## Deploy to Preprod
 
-```bash
-# Set your wallet seed phrase
-export MN_SEED="your 24-word seed phrase here"
+The contract is deployed by the **Deploy to Preprod** GitHub Actions workflow
+(Settings → Actions → trigger `Deploy to Preprod`, or `gh workflow run`). It
+compiles the Compact contract, deploys the `private-voting` contract to Preprod
+with `votingOpen = true`, verifies the on-chain state, and commits the compiled
+`managed/` artifacts plus the [deployment record](./DEPLOYMENT.md) back to the
+repo.
 
-# Deploy
-npm run deploy
+Requirements:
+
+- Repository secret `MIDNIGHT_WALLET_SEED` (or `MN_SEED`) — a **64-character hex
+  wallet seed**.
+- The wallet must be funded: derive its address and request tNIGHT from the
+  faucet (the faucet has a human captcha):
+  ```bash
+  npx tsx scripts/derive-address.ts <seed-hex-64> preprod
+  # → mn_addr_preprod…
+  # open https://faucet.preprod.midnight.network, paste that address, request
+  # tokens, then re-run the workflow (it waits ~10 min for funding to land).
+  ```
+
+Manual deploy (alternative):
+
+```bash
+# Set your wallet seed (64-char hex string)
+export MIDNIGHT_WALLET_SEED="your-64-char-hex-wallet-seed"
+
+# Deploy to Preprod (uses the public Preprod node/indexer/proof-server)
+npm run deploy --workspace=packages/cli
 ```
 
 ## Development — Frontend
@@ -112,7 +134,7 @@ npm run test:integration
 | Lace wallet connect/disconnect | ✅ `useWallet` hook (polls `window.midnight`, `connect()`/`disconnect()`) |
 | Circuit called from frontend | ✅ `registerVoter` and `castVote` via `submitCallTx` |
 | Observable privacy behavior | ✅ Commitment + nullifier pattern (see Privacy Claim) |
-| Contract deployed to Preprod | ✅ `deploy.ts` script using `deployContract` |
+| Contract deployed to Preprod | ✅ `Deploy to Preprod` workflow, `votingOpen=true` construct — see **Submission → Preprod contract** |
 | 8+ meaningful commits | ✅ 10 commits (see `git log`) |
 | Public GitHub repo | ✅ Push to your GitHub |
 | Live demo link | ✅ Ready for Vercel/Netlify |
@@ -128,3 +150,4 @@ npm run test:integration
 - **Live demo:** https://midnight-private-voting.netlify.app
 - **Preprod contract:** [explorer-link]
 - **Demo video:** [youtube-link]
+

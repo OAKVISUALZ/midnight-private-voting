@@ -5,6 +5,10 @@ export ledger VotingBox {
   votingOpen: CircuitBool,
 }
 
+export circuit construct(open: CircuitBool) {
+  votingOpen = open;
+}
+
 export circuit registerVoter(voterSecret: CircuitField): [] {
   assert(votingOpen, "Registration is closed");
   const commitment = pedersenHash(voterSecret);
